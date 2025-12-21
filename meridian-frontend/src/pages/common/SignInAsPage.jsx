@@ -1,6 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const SignInAsView = ({ onSelectRole }) => {
+const SignInAsView = () => {
+  const navigate = useNavigate();
+
+  const handleSelectRole = (role) => {
+    // Navigate to login page with role parameter
+    navigate(`/login/${role}`);
+  };
+
   return (
     <div className="bg-gray-900">
       <style>{`
@@ -64,21 +72,21 @@ const SignInAsView = ({ onSelectRole }) => {
 
         <div className="flex flex-col space-y-4 w-full max-w-sm">
           <button 
-            onClick={() => onSelectRole('manager')}
+            onClick={() => handleSelectRole('manager')}
             className="button-style w-full py-3 px-6 rounded-full font-semibold text-lg tracking-wider text-center"
           >
             Manager
           </button>
           
           <button 
-            onClick={() => onSelectRole('waiter')}
+            onClick={() => handleSelectRole('waiter')}
             className="button-style w-full py-3 px-6 rounded-full font-semibold text-lg tracking-wider text-center"
           >
             Waiter
           </button>
           
           <button 
-            onClick={() => onSelectRole('cashier')}
+            onClick={() => handleSelectRole('cashier')}
             className="button-style w-full py-3 px-6 rounded-full font-semibold text-lg tracking-wider text-center"
           >
             Cashier
@@ -88,4 +96,5 @@ const SignInAsView = ({ onSelectRole }) => {
     </div>
   );
 };
+
 export default SignInAsView;

@@ -1,23 +1,20 @@
 import React from 'react';
 
-const OrderDetail = ({
-  order = { items: [] },
-  onBack,
-  onProceedToPayment,
-}) => {
+const OrderDetail = ({ order, onBack, onProceedToPayment, onCancelOrder }) => {
+  if (!order || !order.items) return <div>Loading...</div>;
 
-  const subtotal = order.items.reduce((sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 0), 0);
-  const vat = subtotal * 0.1;
-  const serviceFee = subtotal * 0.15;
-  const total = subtotal + vat + serviceFee;
+  const isCompleted = order.status === 'completed';
 
-  if (!order || !order.items) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading order...</p>
-      </div>
-    );
-  }
+  // Use calculated fields from serializer (always fresh)
+  const subtotal = order.calculated_subtotal || order.subtotal || 0;
+  const vat = order.calculated_vat || order.vat || 0;
+  const serviceFee = order.calculated_service_fee || order.service_fee || 0;
+  const total = order.calculated_total || order.total || 0;
+
+  const formatMoney = (val) => {
+    const num = parseFloat(val) || 0;
+    return num.toFixed(2);
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F8F8]">
@@ -54,39 +51,49 @@ const OrderDetail = ({
             </svg>
           </button>
           
-          <h1 className="text-lg font-semibold text-gray-800 flex-grow text-center">Orders</h1>
+          <h1 className="text-lg font-semibold text-gray-800 flex-grow text-center">Order #{order.id}</h1>
           <div className="w-6 h-6"></div>
         </header>
         
         <div className="flex justify-between items-center py-6 border-b border-gray-200 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Table {order.table}</h2>
+            {/* Backend field is 'table_number', not 'table' */}
+            <h2 className="text-2xl font-bold text-gray-800">Table {order.table_number}</h2>
             <div className="flex space-x-2 text-sm text-gray-500">
-              <span>Order {order.timeAgo} ago</span>
+              {/* Backend provides 'time_ago' */}
+              <span>Placed {order.time_ago} ago</span>
               <span>•</span>
-              <span>Order #{order.orderId}</span>
+              <span>{order.items.length} Items</span>
             </div>
+            {/* Display Waiter Name from serializer */}
+            <p className="text-xs text-gray-400 mt-1">Waiter: {order.waiter_name || 'N/A'}</p>
           </div>
           <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-600 shadow-sm">
-            Note
+            {order.notes || "No Notes"}
           </button>
         </div>
 
         <div className="space-y-4">
-          {order.items.map((item, idx) => (
-            <div key={idx} className="flex items-center space-x-4 bg-white rounded-xl p-4 shadow-sm">
-              <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">
-                No Image
+          {order.items.map((item) => (
+            <div key={item.id} className="flex items-center space-x-4 bg-white rounded-xl p-4 shadow-sm">
+              <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                 {/* Item Index or Placeholder */}
+                 #{item.id}
               </div>
               
               <div className="flex-grow">
-                <p className="font-semibold text-lg text-gray-800">{item.name}</p>
-                <p className="text-sm text-gray-500">{item.category}</p>
+                {/* Nested fields from OrderItemSerializer */}
+                <p className="font-semibold text-lg text-gray-800">{item.menu_item_name}</p>
+                <p className="text-sm text-gray-500 capitalize">{item.menu_item_category}</p>
+                {item.special_instructions && (
+                   <p className="text-xs text-orange-600 italic">"{item.special_instructions}"</p>
+                )}
               </div>
 
               <div className="text-right">
-                <p className="text-lg font-semibold text-gray-800">${item.price.toFixed(2)}</p>
-                <p className="text-xs text-gray-400">Quantity: {item.quantity}</p>
+                {/* Use 'price_at_time' or 'subtotal' from backend */}
+                <p className="text-lg font-semibold text-gray-800">${formatMoney(item.subtotal)}</p>
+                <p className="text-xs text-gray-400">Qty: {item.quantity} x ${formatMoney(item.price_at_time)}</p>
               </div>
             </div>
           ))}
@@ -97,29 +104,49 @@ const OrderDetail = ({
         <div className="space-y-1 mb-4">
           <div className="flex justify-between opacity-80">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>${formatMoney(subtotal)}</span>
           </div>
           <div className="flex justify-between opacity-80">
-            <span>VAT</span>
-            <span>${vat.toFixed(2)}</span>
+            <span>VAT (12%)</span>
+            <span>${formatMoney(vat)}</span>
           </div>
           <div className="flex justify-between opacity-80">
-            <span>Service fee</span>
-            <span>${serviceFee.toFixed(2)}</span>
+            <span>Service Fee (10%)</span>
+            <span>${formatMoney(serviceFee)}</span>
           </div>
         </div>
 
         <div className="flex justify-between pt-4 border-t border-white/20 text-2xl font-bold mb-6">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>${formatMoney(total)}</span>
         </div>
+        
+        {!isCompleted ? (
+          <div className="flex gap-3">
+            {/* CANCEL BUTTON */}
+            <button 
+              onClick={() => onCancelOrder(order.id)}
+              className="flex-1 bg-white text-red-600 border border-red-200 py-4 rounded-full text-lg font-bold hover:bg-red-50 transition-colors"
+            >
+              Cancel
+            </button>
 
-        <button 
-          onClick={() => onProceedToPayment?.(total)}
-          className="w-full bg-[#EBB62D] text-white py-4 rounded-full text-xl font-semibold hover:bg-[#DDAA1F] transition-colors"
-        >
-          Proceed to Payment
-        </button>
+            {/* PAY BUTTON */}
+            <button 
+              onClick={() => onProceedToPayment(order)}
+              className="flex-[2] bg-[#EBB62D] text-white py-4 rounded-full text-xl font-bold hover:bg-[#DDAA1F] transition-colors"
+            >
+              Pay Now
+            </button>
+          </div>
+        ) : (
+          /* View Only Message */
+          <div className="w-full bg-[#0b4635] py-4 rounded-xl text-center">
+            <span className="text-white/70 font-medium">
+              This order has been completed.
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

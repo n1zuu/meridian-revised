@@ -1,7 +1,20 @@
 import React from 'react';
 
+// receiptData should be the response from CreateTransactionSerializer
 const Receipt = ({ receiptData, onBack }) => {
-  const { total, date, table, orderId, cashier, subtotal, vat, serviceFee } = receiptData;
+  if (!receiptData) return null;
+
+  // Destructure matching TransactionSerializer fields
+  const { 
+    amount, 
+    date, 
+    table_number, 
+    order_id_display, 
+    cashier_name, 
+    payment_method,
+    amount_received,
+    change_given
+  } = receiptData;
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center p-6">
@@ -18,7 +31,7 @@ const Receipt = ({ receiptData, onBack }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <h1 className="text-xl font-semibold text-gray-800">Payment Details</h1>
+          <h1 className="text-xl font-semibold text-gray-800">Transaction Complete</h1>
           <div className="w-6"></div>
         </div>
 
@@ -32,8 +45,8 @@ const Receipt = ({ receiptData, onBack }) => {
           </div>
 
           <div className="text-center mb-10">
-            <p className="text-[#a0abbb] font-medium mb-1">Payment Total</p>
-            <h2 className="text-[42px] font-bold text-[#1a1c21] tracking-tight">${total.toFixed(2)}</h2>
+            <p className="text-[#a0abbb] font-medium mb-1">Total Paid</p>
+            <h2 className="text-[42px] font-bold text-[#1a1c21] tracking-tight">${parseFloat(amount).toFixed(2)}</h2>
           </div>
 
           <div className="space-y-5 mb-8">
@@ -43,53 +56,40 @@ const Receipt = ({ receiptData, onBack }) => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[#a0abbb] font-medium">Table</span>
-              <span className="text-[#1a1c21] font-semibold">{table}</span>
+              <span className="text-[#1a1c21] font-semibold">{table_number}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[#a0abbb] font-medium">Order ID</span>
-              <span className="text-[#1a1c21] font-semibold">{orderId}</span>
+              <span className="text-[#1a1c21] font-semibold">#{order_id_display}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[#a0abbb] font-medium">Cashier</span>
-              <span className="text-[#1a1c21] font-semibold">{cashier}</span>
+              <span className="text-[#1a1c21] font-semibold">{cashier_name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#a0abbb] font-medium">Method</span>
+              <span className="text-[#1a1c21] font-semibold capitalize">{payment_method}</span>
             </div>
           </div>
 
           <div className="border-t border-dashed border-[#e2e8f0] mb-8"></div>
 
-          <div className="space-y-4 mb-8">
-            <div className="flex justify-between">
-              <span className="text-[#a0abbb] font-medium">Subtotal</span>
-              <span className="text-[#1a1c21] font-semibold">${subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#a0abbb] font-medium">VAT</span>
-              <span className="text-[#1a1c21] font-semibold">${vat.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#a0abbb] font-medium">Service fee</span>
-              <span className="text-[#1a1c21] font-semibold">${serviceFee.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div className="border-t border-dashed border-[#e2e8f0] mb-8"></div>
-
-          <div className="flex justify-between items-center pb-2">
-            <span className="text-lg font-bold text-black">Total</span>
-            <span className="text-lg font-bold text-black">${total.toFixed(2)}</span>
-          </div>
+          {/* Cash Specific Details */}
+          {payment_method === 'cash' && (
+             <div className="space-y-4 mb-8">
+               <div className="flex justify-between">
+                 <span className="text-[#a0abbb] font-medium">Cash Received</span>
+                 <span className="text-[#1a1c21] font-semibold">${parseFloat(amount_received).toFixed(2)}</span>
+               </div>
+               <div className="flex justify-between">
+                 <span className="text-[#a0abbb] font-medium">Change</span>
+                 <span className="text-[#1a1c21] font-semibold text-green-600">${parseFloat(change_given).toFixed(2)}</span>
+               </div>
+             </div>
+          )}
 
           <div className="mt-8 text-center">
-            <svg className="mx-auto" width="300" height="80" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
-              <rect className="fill-black" x="0" y="0" width="4" height="80"/>
-              <rect className="fill-black" x="6" y="0" width="2" height="80"/>
-              <rect className="fill-black" x="10" y="0" width="2" height="80"/>
-              <rect className="fill-black" x="14" y="0" width="4" height="80"/>
-              <rect className="fill-black" x="20" y="0" width="2" height="80"/>
-              <rect className="fill-black" x="24" y="0" width="2" height="80"/>
-              <rect className="fill-black" x="28" y="0" width="4" height="80"/>
-              <rect className="fill-black" x="34" y="0" width="2" height="80"/>
-            </svg>
+             <p className="text-sm text-gray-400">Thank you for dining with Meridian</p>
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const MeridianLanding = ({ onSignIn, onGuestAccess }) => {
+const MeridianLanding = () => {
   const navigate = useNavigate();
+
   const handleSignIn = () => {
     navigate('/signin-as');
   };
@@ -82,14 +83,14 @@ const MeridianLanding = ({ onSignIn, onGuestAccess }) => {
           </p>
 
           <button 
-            onClick={(handleSignIn)}
+            onClick={handleSignIn}
             className="btn-meridian w-64 mb-6"
           >
             Sign In
           </button>
           
           <button 
-            onClick={(handleGuestMode)}
+            onClick={handleGuestMode}
             className="btn-meridian w-64"
           >
             Use As Guest

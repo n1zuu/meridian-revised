@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/axiosClient';
+import getImageUrl from '../../utils/getImage';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -7,6 +9,9 @@ const CustomerDashboard = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedFood, setSelectedFood] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { id: 'all', name: 'All', emoji: '🍱' },
@@ -16,20 +21,34 @@ const CustomerDashboard = () => {
     { id: 'main-courses', name: 'Main Courses', emoji: '🍖' },
     { id: 'rotisserie', name: 'Rotisserie', emoji: '🍗' },
     { id: 'accompaniments', name: 'Accompaniments', emoji: '🥖' },
-    { id: 'amuse-bouche', name: 'Amuse-Bouche', emoji: '✨' },
     { id: 'dessert', name: 'Dessert', emoji: '🰀' },
     { id: 'beverages', name: 'Beverages', emoji: '🍹' },
   ];
 
-  const menuItems = [
-    { id: 'greek-salad', category: 'salad', name: 'Easy Greek Salad', price: 21.99, description: 'A refreshing Mediterranean classic featuring crisp lettuce, juicy tomatoes, cucumbers, red onion, olives, and authentic feta cheese, dressed with a light olive oil and oregano vinaigrette.', image: 'https://via.placeholder.com/150/5eb087?text=Easy+Greek+Salad' },
-    { id: 'chicken-salad', category: 'salad', name: 'Grilled Chicken Salad', price: 25.50, description: 'Tender grilled chicken breast served over a bed of mixed greens, topped with sweet corn, cherry tomatoes, avocado slices, and a creamy ranch dressing. A filling and healthy choice.', image: 'https://via.placeholder.com/150/457c4f?text=Grilled+Chicken+Salad' },
-    { id: 'espresso-martini', category: 'beverages', name: 'Espresso Martini', price: 14.00, description: 'A sophisticated blend of vodka, coffee liqueur, and freshly brewed espresso, shaken vigorously for a velvety crema finish.', image: 'https://via.placeholder.com/150/1c1c1c?text=Espresso+Martini' },
-    { id: 'beef-tenderloin', category: 'main-courses', name: 'Beef Tenderloin', price: 45.99, description: 'Eight-ounce premium cut of beef tenderloin, grilled to perfection, served with seasonal roasted vegetables and a rich red wine reduction.', image: 'https://via.placeholder.com/150/4a2c2c?text=Beef+Tenderloin' },
-  ];
+  // --- 1. FETCH MENU ---
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        // Authenticated as guest or public access allowed
+        const response = await api.get('/menu/');
+        setMenuItems(response.data.map(item => ({
+            ...item,
+            image: item.image || 'https://via.placeholder.com/150?text=No+Image',
+            category: item.category === 'main-courses' ? 'main-courses' : item.category // Ensure match
+        })));
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to load menu", error);
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
 
   const filteredItems = menuItems.filter(item => {
-    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+    // Normalizing category check
+    const itemCat = item.category === 'main' ? 'main-courses' : item.category;
+    const matchesCategory = activeCategory === 'all' || itemCat === activeCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchText.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -50,11 +69,13 @@ const CustomerDashboard = () => {
     return category ? category.name : 'Menu Items';
   };
 
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Menu...</div>;
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Styles */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Kapakana:wght@400;700&family=Lora:ital,wght@1,400;1,700&display=swap');
-        
         .meridian-script-small {
           font-family: 'Kapakana', cursive;
           font-size: 1.5rem;
@@ -63,22 +84,8 @@ const CustomerDashboard = () => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        
-        .category-scroll {
-          overflow-x: scroll;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-          -webkit-overflow-scrolling: touch;
-        }
-        .category-scroll::-webkit-scrollbar {
-          display: none;
-        }
-        
-        /* Ensure horizontal scrolling works */
-        .category-container {
-          display: inline-flex;
-          min-width: min-content;
-        }
+        .category-scroll { overflow-x: scroll; scrollbar-width: none; }
+        .category-scroll::-webkit-scrollbar { display: none; }
       `}</style>
 
       {/* Header */}
@@ -91,7 +98,6 @@ const CustomerDashboard = () => {
             </div>
           </div>
 
-          {/* Search Bar */}
           <div className="flex items-center space-x-3 mb-6">
             <div className="relative flex-grow shadow rounded-xl">
               <input
@@ -109,15 +115,14 @@ const CustomerDashboard = () => {
             <button
               onClick={() => navigate('/')}
               className="flex-shrink-0 w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow"
-              title="Log Out"
+              title="Exit Guest Mode"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+               <svg className="w-6 h-6 text-gray-900" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H9" />
               </svg>
             </button>
           </div>
 
-          {/* Category Pills */}
           <div className="category-scroll flex pb-3 overflow-x-auto">
             <div className="flex space-x-3 category-container">
               {categories.map(category => (
@@ -143,22 +148,32 @@ const CustomerDashboard = () => {
       <main className="max-w-4xl mx-auto p-4 pt-6">
         <h2 className="text-xl font-semibold mb-4">{getCategoryTitle()}</h2>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filteredItems.map(item => (
-            <div
-              key={item.id}
-              onClick={() => handleCardClick(item)}
-              className="bg-white rounded-xl p-3 shadow hover:shadow-lg transition-all cursor-pointer hover:-translate-y-1"
-            >
-              <div className="w-full h-36 rounded-lg overflow-hidden mb-3">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-              </div>
-              <p className="font-semibold text-base truncate">{item.name}</p>
-              <p className="text-xs text-gray-500 truncate">{item.category}</p>
-              <p className="text-lg font-bold text-[#3b5a44] mt-1">${item.price.toFixed(2)}</p>
+        {filteredItems.length === 0 ? (
+             <p className="text-gray-500 text-center py-10">No items found.</p>
+        ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {filteredItems.map(item => (
+                <div
+                key={item.id}
+                onClick={() => handleCardClick(item)}
+                className="bg-white rounded-xl p-3 shadow hover:shadow-lg transition-all cursor-pointer hover:-translate-y-1"
+                >
+                <div className="w-full h-36 rounded-lg overflow-hidden mb-3">
+                    <img 
+                      src={getImageUrl(item.image)} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover" 
+                      // Optional: Add an error handler if the image is truly missing
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }}
+                    />
+                </div>
+                <p className="font-semibold text-base truncate">{item.name}</p>
+                <p className="text-xs text-gray-500 truncate capitalize">{item.category}</p>
+                <p className="text-lg font-bold text-[#3b5a44] mt-1">${parseFloat(item.price).toFixed(2)}</p>
+                </div>
+            ))}
             </div>
-          ))}
-        </div>
+        )}
       </main>
 
       {/* Food Detail Modal */}
@@ -180,18 +195,15 @@ const CustomerDashboard = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              
               <img src={selectedFood.image} alt={selectedFood.name} className="w-full h-64 object-cover rounded-t-2xl" />
             </div>
 
             <div className="p-5">
               <h2 className="text-3xl font-bold text-gray-800 mb-3">{selectedFood.name}</h2>
-              
               <div className="mb-4">
                 <p className="text-gray-500 text-lg">Price</p>
-                <p className="text-3xl font-bold text-red-600">${selectedFood.price.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-red-600">${parseFloat(selectedFood.price).toFixed(2)}</p>
               </div>
-              
               <h3 className="text-xl font-bold text-[#3b5a44] mb-2 border-b-2 border-gray-200 pb-1">Description</h3>
               <p className="text-gray-700 text-base leading-relaxed">{selectedFood.description}</p>
             </div>
