@@ -4,11 +4,13 @@ class MenuItem(models.Model):
     """Menu items available in the restaurant"""
     
     CATEGORY_CHOICES = [
-        ('appetizer', 'Appetizer'),
+        ('entrées', 'Entrées'),
+        ('soup', 'Soup'),
+        ('salad', 'Salad'),
         ('main', 'Main Course'),
+        ('accompaniments', 'Accompaniments'),
         ('dessert', 'Dessert'),
         ('beverage', 'Beverage'),
-        ('side', 'Side Dish'),
     ]
     
     name = models.CharField(max_length=255)
