@@ -1,7 +1,8 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.throttling import AnonRateThrottle
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
 from .models import User, MenuItem, Order, OrderItem, Transaction
@@ -10,11 +11,14 @@ from .serializers import (
     CreateOrderSerializer, TransactionSerializer, CreateTransactionSerializer,
     CreateUserSerializer
 )
-from .permissions import IsManager
+from .permissions import (
+    IsManager, IsWaiterOrManager, IsCashierOrManager,
+)
 
 # Authentication Views
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([AnonRateThrottle])
 def login_view(request):
     username = request.data.get('username')
     password = request.data.get('password')
@@ -99,7 +103,17 @@ class MenuItemViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    
+
+    def get_permissions(self):
+        """
+        Role-based access control for order operations:
+        - Any authenticated user may list/retrieve (scoped by role via get_queryset).
+        - Only waiters and managers may create/update/delete orders.
+        """
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsWaiterOrManager()]
+
     def get_queryset(self):
         queryset = Order.objects.prefetch_related('items__menu_item').all()
         
@@ -162,6 +176,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+    # Payment/transaction records are sensitive: only cashiers and managers.
+    permission_classes = [IsCashierOrManager]
     
     def get_queryset(self):
         queryset = Transaction.objects.all()
