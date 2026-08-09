@@ -30,19 +30,19 @@ Meridian is a full-stack web application designed to streamline restaurant opera
 ### Backend
 * **Framework:** Django & Django REST Framework (DRF)
 * **Database:** SQLite (Development) / PostgreSQL (Recommended for Production)
-* **Authentication:** JWT (JSON Web Tokens) or Token Authentication
+* **Authentication:** Session-based authentication (Django) with CSRF protection
 * **Media Handling:** Django Media files for menu images
 
 ## Project Structure
 
 ```
 meridian/
-├── backend/                # Django Project
+├── meridian-backend/       # Django Project
 │   ├── media/              # Uploaded menu images
 │   ├── restaurant/         # Main app logic (models, views, serializers)
 │   ├── meridian_backend/   # Project settings & URL config
 │   └── manage.py
-├── frontend/               # React Project
+├── meridian-frontend/      # React Project
 │   ├── src/
 │   │   ├── components/     # Reusable UI components (CashierDashboard, etc.)
 │   │   ├── services/       # API services (axiosClient.js)
@@ -56,7 +56,7 @@ meridian/
 ## Installation & Setup
 ### Prerequisites
 - Node.js & npm
-- Python 3.8+
+- Python 3.12+ (required by Django 6.0)
 - Android Studio (for mobile build)
 
 1. Backend Setup (Django)
@@ -68,9 +68,12 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install django djangorestframework django-cors-headers
+pip install -r requirements.txt
 
-# Run migrations
+# Configure environment (copy template, then set a secret key)
+copy .env.example .env
+
+# Run migrations (creates the database on first run)
 python manage.py makemigrations
 python manage.py migrate
 
@@ -91,6 +94,19 @@ npm install
 # Start development server
 npm run dev
 ```
+
+## Security
+Security hardening notes are documented in [SECURITY.md](SECURITY.md). Highlights:
+
+- Sensitive configuration (secret key, allowed hosts, CORS/CSRF origins) is read
+  from environment variables — see [`.env.example`](meridian-backend/.env.example).
+- Role-based access control restricts order mutations to waiters/managers and
+  payment records to cashiers/managers.
+- Login is rate-limited to mitigate brute-force credential guessing.
+- HTTPS/secure-cookie flags can be enabled via environment variables.
+
+> **Note:** the SQLite database is not tracked in version control. Run
+> `python manage.py migrate` to create it after cloning.
 
 ## License
 This project is licensed under the GNU 3.0 General Public License.
