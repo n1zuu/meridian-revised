@@ -54,6 +54,11 @@ behaviour/features**; they only close identified security gaps.
 - `axiosClient.js` hardcoded the backend to a private IP
 - Now reads `REACT_APP_API_BASE_URL` from the environment, defaulting to
   `http://localhost:8000/api`.
+- Role-specific pages (`/admin/*`, `/cashier/*`, `/waiter/*`, `/settings`) are
+  guarded by a `ProtectedRoute` component so users cannot reach screens they are
+  not authorized for.
+- Removed an unused `useWebSocket` hook that hardcoded a private IP
+  (`ws://192.168.1.42:8080`); no WebSocket backend exists.
 
 ## Remaining recommendations (not in scope of this pass)
 - Serve the app over HTTPS (or behind a TLS reverse proxy) before any real
