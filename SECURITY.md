@@ -52,7 +52,6 @@ behaviour/features**; they only close identified security gaps.
 ## Frontend (React)
 
 - `axiosClient.js` hardcoded the backend to a private IP
-  (`http://10.208.14.243:8000/api`).
 - Now reads `REACT_APP_API_BASE_URL` from the environment, defaulting to
   `http://localhost:8000/api`.
 
