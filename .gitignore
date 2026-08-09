@@ -175,3 +175,5 @@ structure.txt
 # Uploaded files (if you have user uploads)
 uploads/
 media/
+# Meridian-specific database
+meridian-backend/meridian_db.sqlite3
