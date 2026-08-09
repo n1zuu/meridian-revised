@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://10.208.14.243:8000/api';
+// Base URL for the Django API. Override via REACT_APP_API_BASE_URL in a .env file.
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api';
 
 // Create axios instance
 const api = axios.create({
